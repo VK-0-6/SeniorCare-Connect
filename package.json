@@ -1,0 +1,17 @@
+{
+  "name": "seniorcare-connect",
+  "version": "1.0.0",
+  "description": "SeniorCare Connect - A senior-friendly health companion app",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.4"
+  },
+  "devDependencies": {
+    "vite": "^5.4.0"
+  }
+}
