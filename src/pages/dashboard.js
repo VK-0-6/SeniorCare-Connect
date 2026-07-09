@@ -5,7 +5,7 @@ import { dashboardLayout } from '../components/pageLayout.js';
 import { emptyState } from '../components/emptyState.js';
 import { spinner } from '../components/spinner.js';
 import { navigate } from '../router.js';
-import { formatTime, timeFromNow } from '../utils/format.js';
+import { formatTime, timeFromNow, formatDate } from '../utils/format.js';
 import {
   listMedicines,
   listTodayLogs,
@@ -14,6 +14,7 @@ import {
   isMissed,
   isUpcoming,
 } from '../services/medicinesService.js';
+import { getProfile } from '../services/healthService.js';
 
 const QUICK_ACTIONS = [
   { route: '/medicines', label: 'Add Medicine', icon: 'pill' },
@@ -27,9 +28,10 @@ export async function dashboardPage() {
   root.append(spinner());
 
   try {
-    const [medicines, todayLogs] = await Promise.all([
+    const [medicines, todayLogs, healthProfile] = await Promise.all([
       listMedicines(),
       listTodayLogs(),
+      getProfile(),
     ]);
 
     const takenIds = new Set(
@@ -50,7 +52,7 @@ export async function dashboardPage() {
     const progressPct = totalCount > 0 ? Math.round((takenCount / totalCount) * 100) : 0;
 
     clear(root);
-    renderDashboard(root, { todayList, upcomingMeds, missedMeds, takenCount, totalCount, progressPct, takenIds });
+    renderDashboard(root, { todayList, upcomingMeds, missedMeds, takenCount, totalCount, progressPct, takenIds, healthProfile });
   } catch (err) {
     clear(root);
     root.append(h('div', { class: 'card', style: { borderColor: 'var(--color-danger-500)' } },
@@ -64,7 +66,7 @@ export async function dashboardPage() {
 }
 
 function renderDashboard(root, data) {
-  const { todayList, upcomingMeds, missedMeds, takenCount, totalCount, progressPct, takenIds } = data;
+  const { todayList, upcomingMeds, missedMeds, takenCount, totalCount, progressPct, takenIds, healthProfile } = data;
 
   const header = h('div', { class: 'page-header' },
     h('h1', {}, 'Good day'),
@@ -159,9 +161,55 @@ function renderDashboard(root, data) {
   const health = h('div', { class: 'card widget' },
     h('div', { class: 'widget-header' },
       h('h3', {}, 'Health Profile'),
-      h('a', { href: '#/health', onclick: (e) => { e.preventDefault(); navigate('/health'); } }, 'Edit')
+      h('a', { href: '#/health', onclick: (e) => { e.preventDefault(); navigate('/health'); } }, healthProfile ? 'Edit' : 'Create')
     ),
-    emptyState({ icon: '❤️', title: 'Profile not set up', message: 'Add your medical details.' })
+    healthProfile
+      ? h('div', { class: 'stack' },
+          h('div', { class: 'row-between' },
+            h('span', { class: 'text-muted' }, 'Blood Group'),
+            h('span', { class: 'badge badge-primary', style: { fontSize: 'var(--font-size-lg)' } }, healthProfile.blood_group || '—')
+          ),
+          h('div', { class: 'row-between' },
+            h('span', { class: 'text-muted' }, 'Emergency Contact'),
+            h('span', { style: { fontWeight: '700', textAlign: 'right' } },
+              healthProfile.emergency_contact_name || '—',
+              healthProfile.emergency_contact_phone ? ` · ${healthProfile.emergency_contact_phone}` : '')
+          ),
+          h('div', { class: 'row-between' },
+            h('span', { class: 'text-muted' }, 'Last Updated'),
+            h('span', { class: 'text-muted' }, formatDate(healthProfile.updated_at))
+          )
+        )
+      : emptyState({ icon: '❤️', title: 'Profile not set up', message: 'Add your medical details.' })
+  );
+
+  // QR health card widget
+  const qrWidget = h('div', { class: 'card widget' },
+    h('div', { class: 'widget-header' },
+      h('h3', {}, 'QR Health Card'),
+      h('a', { href: '#/qr', onclick: (e) => { e.preventDefault(); navigate('/qr'); } }, 'Open')
+    ),
+    healthProfile
+      ? h('div', { class: 'stack' },
+          h('div', { class: 'row-between' },
+            h('span', { class: 'text-muted' }, 'Status'),
+            h('span', { class: 'badge badge-success' }, 'Available')
+          ),
+          h('p', { class: 'text-muted', style: { fontSize: 'var(--font-size-sm)' } },
+            'Your QR health card is ready to scan and share.'),
+          h('button', { class: 'btn btn-primary btn-block', onclick: () => navigate('/qr') },
+            icon('qr'), 'View QR Card')
+        )
+      : h('div', { class: 'stack' },
+          h('div', { class: 'row-between' },
+            h('span', { class: 'text-muted' }, 'Status'),
+            h('span', { class: 'badge badge-warning' }, 'Not Available')
+          ),
+          h('p', { class: 'text-muted', style: { fontSize: 'var(--font-size-sm)' } },
+            'Create a health profile to generate your QR card.'),
+          h('button', { class: 'btn btn-outline btn-block', onclick: () => navigate('/health') },
+            'Create Profile')
+        )
   );
 
   // Quick actions widget
@@ -198,7 +246,7 @@ function renderDashboard(root, data) {
 
   root.append(header);
   root.append(h('div', { class: 'widget-grid' }, progressWidget, todayWidget, upcomingWidget, missedWidget));
-  root.append(h('div', { class: 'widget-grid' }, sos, health));
+  root.append(h('div', { class: 'widget-grid' }, sos, health, qrWidget));
   root.append(quick);
   root.append(h('div', { class: 'widget-grid' }, activity, ai));
 }
