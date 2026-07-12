@@ -9,6 +9,9 @@ const defaults = {
   fontSize: 'normal', // 'normal' | 'large' | 'xlarge'
   language: 'en', // 'en' | 'te' (future)
   notifications: true,
+  voiceCommands: true,   // floating mic button enabled
+  voiceReading: true,    // 'Read This Page' button enabled
+  speechSpeed: 'normal', // 'slow' | 'normal' | 'fast'
 };
 
 let state = load();

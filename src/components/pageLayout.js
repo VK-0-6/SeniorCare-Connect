@@ -2,6 +2,7 @@
 // withAuth wraps a handler so it redirects to /login when unauthenticated.
 
 import { h } from '../utils/dom.js';
+import { createMicButton } from '../services/voiceService.js';
 import { renderNavbar } from './navbar.js';
 import { renderFooter } from './footer.js';
 import { renderSidebar } from './sidebar.js';
@@ -30,5 +31,8 @@ export function dashboardLayout(contentNode) {
   const main = h('main', { class: 'app-main' },
     h('div', { class: 'container dashboard-layout' }, renderSidebar(), h('div', {}, contentNode))
   );
-  return h('div', { class: 'app-shell' }, renderNavbar(), main, renderFooter());
+  const shell = h('div', { class: 'app-shell' }, renderNavbar(), main, renderFooter());
+  const mic = createMicButton();
+  if (mic) shell.append(mic);
+  return shell;
 }

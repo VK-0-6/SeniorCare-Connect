@@ -2,6 +2,7 @@
 
 import { h, icon } from '../utils/dom.js';
 import { dashboardLayout } from '../components/pageLayout.js';
+import { createReadButton } from '../services/voiceService.js';
 import { emptyState } from '../components/emptyState.js';
 import { spinner } from '../components/spinner.js';
 import { navigate } from '../router.js';
@@ -17,10 +18,11 @@ import {
 import { getProfile } from '../services/healthService.js';
 
 const QUICK_ACTIONS = [
-  { route: '/medicines', label: 'Add Medicine', icon: 'pill' },
-  { route: '/sos', label: 'Emergency SOS', icon: 'sos' },
-  { route: '/qr', label: 'Health Card', icon: 'qr' },
-  { route: '/ai-reader', label: 'AI Reader', icon: 'ai' },
+  { route: '/sos',      label: 'Emergency SOS',   icon: 'sos'   },
+  { route: '/medicines', label: 'Medicines',       icon: 'pill'  },
+  { route: '/qr',       label: 'Health Card',      icon: 'qr'    },
+  { route: '/contacts', label: 'Trusted Contacts', icon: 'users' },
+  { route: '/ai-reader', label: 'AI Reader',       icon: 'ai'    },
 ];
 
 export async function dashboardPage() {
@@ -70,7 +72,8 @@ function renderDashboard(root, data) {
 
   const header = h('div', { class: 'page-header' },
     h('h1', {}, 'Good day'),
-    h('p', { class: 'text-muted' }, 'Here is your health at a glance.')
+    h('p', { class: 'text-muted' }, 'Here is your health at a glance.'),
+    createReadButton(() => `Welcome. You have ${todayList.length} medicine${todayList.length !== 1 ? 's' : ''} scheduled today.`)
   );
 
   // Progress widget
@@ -158,22 +161,39 @@ function renderDashboard(root, data) {
   );
 
   // Health profile card widget
+  const profilePct = calcProfileCompletion(healthProfile);
   const health = h('div', { class: 'card widget' },
     h('div', { class: 'widget-header' },
-      h('h3', {}, 'Health Profile'),
+      h('h3', {}, 'Health Summary'),
       h('a', { href: '#/health', onclick: (e) => { e.preventDefault(); navigate('/health'); } }, healthProfile ? 'Edit' : 'Create')
     ),
     healthProfile
       ? h('div', { class: 'stack' },
+          // Completion bar
+          h('div', {},
+            h('div', { class: 'row-between', style: { marginBottom: 'var(--space-2)' } },
+              h('span', { class: 'text-muted' }, 'Profile Completion'),
+              h('span', { class: profilePct === 100 ? 'badge badge-success' : 'badge badge-warning' }, `${profilePct}%`)
+            ),
+            h('div', { style: { height: '8px', borderRadius: '4px', background: 'var(--color-gray-200)', overflow: 'hidden' } },
+              h('div', { style: {
+                height: '100%', width: `${profilePct}%`,
+                background: profilePct === 100 ? 'var(--color-secondary-500)' : 'var(--color-primary-600)',
+                transition: 'width 0.5s ease',
+              } })
+            )
+          ),
           h('div', { class: 'row-between' },
             h('span', { class: 'text-muted' }, 'Blood Group'),
             h('span', { class: 'badge badge-primary', style: { fontSize: 'var(--font-size-lg)' } }, healthProfile.blood_group || '—')
           ),
           h('div', { class: 'row-between' },
             h('span', { class: 'text-muted' }, 'Emergency Contact'),
-            h('span', { style: { fontWeight: '700', textAlign: 'right' } },
-              healthProfile.emergency_contact_name || '—',
-              healthProfile.emergency_contact_phone ? ` · ${healthProfile.emergency_contact_phone}` : '')
+            healthProfile.emergency_contact_name
+              ? h('span', { style: { fontWeight: '700', textAlign: 'right' } },
+                  healthProfile.emergency_contact_name,
+                  healthProfile.emergency_contact_phone ? ` · ${healthProfile.emergency_contact_phone}` : '')
+              : h('span', { class: 'badge badge-warning' }, 'Not set')
           ),
           h('div', { class: 'row-between' },
             h('span', { class: 'text-muted' }, 'Last Updated'),
@@ -249,6 +269,22 @@ function renderDashboard(root, data) {
   root.append(h('div', { class: 'widget-grid' }, sos, health, qrWidget));
   root.append(quick);
   root.append(h('div', { class: 'widget-grid' }, activity, ai));
+}
+
+function calcProfileCompletion(profile) {
+  if (!profile) return 0;
+  const fields = [
+    'full_name', 'date_of_birth', 'blood_group',
+    'allergies', 'conditions',
+    'emergency_contact_name', 'emergency_contact_phone',
+  ];
+  const filled = fields.filter((f) => {
+    const v = profile[f];
+    if (v == null || v === '') return false;
+    if (Array.isArray(v)) return v.length > 0;
+    return true;
+  }).length;
+  return Math.round((filled / fields.length) * 100);
 }
 
 function medListItem(med, isTaken) {

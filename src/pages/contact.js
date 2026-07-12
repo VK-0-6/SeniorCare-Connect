@@ -17,9 +17,9 @@ export function contactPage() {
         toast.success('Message sent', 'Thank you for reaching out. We will reply soon.');
         e.target.reset();
       } },
-        field({ label: 'Your name', name: 'name', placeholder: 'Your name', required: true }),
-        field({ label: 'Email', name: 'email', type: 'email', placeholder: 'you@example.com', required: true }),
-        field({ label: 'Message', name: 'message', type: 'textarea', placeholder: 'How can we help?', required: true }),
+        field({ label: 'Your name', name: 'name', placeholder: 'Your name', required: true }).group,
+        field({ label: 'Email', name: 'email', type: 'email', placeholder: 'you@example.com', required: true }).group,
+        field({ label: 'Message', name: 'message', type: 'textarea', placeholder: 'How can we help?', required: true }).group,
         h('button', { class: 'btn btn-primary btn-block btn-lg', type: 'submit' }, 'Send Message')
       )
     ),

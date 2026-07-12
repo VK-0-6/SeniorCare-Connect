@@ -3,6 +3,7 @@
 // Uses existing reusable components: formField, modal, emptyState, spinner, toast.
 
 import { h, icon, clear } from '../utils/dom.js';
+import { createReadButton } from '../services/voiceService.js';
 import { dashboardLayout } from '../components/pageLayout.js';
 import { field, getFormData } from '../components/formField.js';
 import { openModal } from '../components/modal.js';
@@ -94,7 +95,12 @@ function renderViewMode(root, profile) {
       ),
       h('button', { class: 'btn btn-primary btn-lg', onclick: () => openForm(root, profile) },
         icon('settings'), 'Edit Profile')
-    )
+    ),
+    createReadButton(() => {
+      const bg   = profile.blood_group || 'not recorded';
+      const name = profile.full_name ? `${profile.full_name}. ` : '';
+      return `${name}Your blood group is ${bg}.`;
+    })
   );
   root.append(header);
 

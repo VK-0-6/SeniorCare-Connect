@@ -23,9 +23,13 @@ import { settingsPage } from './pages/settings.js';
 import { aboutPage } from './pages/about.js';
 import { contactPage } from './pages/contact.js';
 import { notFoundPage } from './pages/notFound.js';
+import { trustedContactsPage } from './pages/trustedContacts.js';
 
 // Guards
 import { withAuth } from './components/pageLayout.js';
+
+// Reminder notifications
+import { startReminderCheck, stopReminderCheck, requestPermission, isSupported as notifSupported } from './services/reminderNotificationService.js';
 
 // Public routes
 registerRoute('/', landingPage);
@@ -39,6 +43,7 @@ registerRoute('/dashboard', withAuth(dashboardPage));
 registerRoute('/medicines', withAuth(medicinesPage));
 registerRoute('/medicines/history', withAuth(reminderHistoryPage));
 registerRoute('/sos', withAuth(sosPage));
+registerRoute('/contacts', withAuth(trustedContactsPage));
 registerRoute('/health', withAuth(healthPage));
 registerRoute('/qr', withAuth(qrPage));
 registerRoute('/ai-reader', withAuth(aiReaderPage));
@@ -50,10 +55,19 @@ setNotFound(notFoundPage);
 beforeEach(() => true);
 
 // Re-render on auth state changes so protected pages react immediately.
-onAuthChange(() => {
+// Also start/stop browser notification reminders based on auth state.
+onAuthChange((session) => {
   const path = currentRoute();
   if (path !== '/login' && path !== '/register') {
     render();
+  }
+  if (session) {
+    // Silently request permission then begin checking (if notifications are enabled)
+    if (notifSupported()) {
+      requestPermission().then(() => startReminderCheck()).catch(() => {});
+    }
+  } else {
+    stopReminderCheck();
   }
 });
 

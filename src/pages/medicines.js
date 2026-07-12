@@ -3,6 +3,7 @@
 
 import { h, icon } from '../utils/dom.js';
 import { dashboardLayout } from '../components/pageLayout.js';
+import { createReadButton } from '../services/voiceService.js';
 import { field, getFormData } from '../components/formField.js';
 import { openModal, confirmDialog } from '../components/modal.js';
 import { emptyState } from '../components/emptyState.js';
@@ -18,6 +19,7 @@ import {
   findDuplicate,
   markTaken,
   listTodayLogs,
+  listReminderLogs,
   timeOfDay,
   isMedicineActiveToday,
   isMissed,
@@ -93,7 +95,8 @@ function renderHeader(root, total, taken) {
       h('button', { class: 'btn btn-primary btn-lg', onclick: () => openMedicineForm(root) },
         icon('plus'), 'Add Medicine'
       )
-    )
+    ),
+    createReadButton(() => `You currently have ${total} active medicine${total !== 1 ? 's' : ''}.`)
   );
   root.append(header);
 }

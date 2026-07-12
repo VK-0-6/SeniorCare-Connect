@@ -19,6 +19,7 @@ const SECTIONS = [
     links: [
       { route: '/ai-reader', label: 'AI Medicine Reader', icon: 'ai' },
       { route: '/sos', label: 'Emergency SOS', icon: 'sos' },
+      { route: '/contacts', label: 'Trusted Contacts', icon: 'users' },
     ],
   },
   {

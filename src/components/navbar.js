@@ -3,7 +3,7 @@
 
 import { h, icon } from '../utils/dom.js';
 import { navigate, currentRoute } from '../router.js';
-import { getUser } from '../services/authService.js';
+import { getCachedUser } from '../services/authService.js';
 
 const PUBLIC_LINKS = [
   { route: '/', label: 'Home' },
@@ -17,7 +17,8 @@ const AUTH_LINKS = [
 ];
 
 export function renderNavbar() {
-  const user = getUser();
+  // getCachedUser() is synchronous — returns null when logged out.
+  const user = getCachedUser();
   const links = user
     ? [{ route: '/dashboard', label: 'Dashboard' }, ...PUBLIC_LINKS.slice(1)]
     : PUBLIC_LINKS;

@@ -1,4 +1,4 @@
-// pages/settings.js — Settings (functional in Phase 1: theme, font size, language, notifications).
+// pages/settings.js — Settings (theme, font size, language, notifications, voice).
 
 import { h, icon } from '../utils/dom.js';
 import { dashboardLayout } from '../components/pageLayout.js';
@@ -6,13 +6,15 @@ import { getSettings, updateSettings } from '../utils/settings.js';
 import toast from '../components/toast.js';
 import { signOut } from '../services/authService.js';
 import { navigate } from '../router.js';
+import { createReadButton } from '../services/voiceService.js';
 
 export function settingsPage() {
   const settings = getSettings();
 
   const header = h('div', { class: 'page-header' },
     h('div', { class: 'row-center' }, h('div', { class: 'widget-icon' }, icon('settings')), h('h1', {}, 'Settings')),
-    h('p', { class: 'text-muted' }, 'Make SeniorCare comfortable for you.')
+    h('p', { class: 'text-muted' }, 'Make SeniorCare comfortable for you.'),
+    createReadButton(() => 'Settings page. Adjust your theme, font size, and voice preferences here.')
   );
 
   // Theme
@@ -63,6 +65,45 @@ export function settingsPage() {
     )
   );
 
+  // Voice Assistance
+  const voiceCard = h('div', { class: 'card' },
+    h('h3', {}, 'Voice Assistance'),
+
+    // Enable Voice Commands
+    h('div', { class: 'row-between', style: { marginBottom: 'var(--space-5)' } },
+      h('div', {},
+        h('div', { class: 'form-label', style: { marginBottom: '0' } }, 'Enable Voice Commands'),
+        h('div', { class: 'form-hint' }, 'Use the microphone button to navigate by voice.')
+      ),
+      toggleSwitch(settings.voiceCommands, (checked) => {
+        updateSettings({ voiceCommands: checked });
+        toast.success('Saved', `Voice commands ${checked ? 'enabled' : 'disabled'}.`);
+      })
+    ),
+
+    // Enable Voice Reading
+    h('div', { class: 'row-between', style: { marginBottom: 'var(--space-5)' } },
+      h('div', {},
+        h('div', { class: 'form-label', style: { marginBottom: '0' } }, 'Enable Voice Reading'),
+        h('div', { class: 'form-hint' }, 'Allow the Read This Page button to speak page summaries.')
+      ),
+      toggleSwitch(settings.voiceReading, (checked) => {
+        updateSettings({ voiceReading: checked });
+        toast.success('Saved', `Voice reading ${checked ? 'enabled' : 'disabled'}.`);
+      })
+    ),
+
+    // Speech Speed
+    h('div', { class: 'form-group', style: { marginBottom: '0' } },
+      h('label', { class: 'form-label' }, 'Speech Speed'),
+      h('div', { class: 'row' },
+        speedButton('slow',   'Slow',   settings.speechSpeed),
+        speedButton('normal', 'Normal', settings.speechSpeed),
+        speedButton('fast',   'Fast',   settings.speechSpeed)
+      )
+    )
+  );
+
   // Privacy
   const privacyCard = h('div', { class: 'card' },
     h('h3', {}, 'Privacy'),
@@ -79,7 +120,7 @@ export function settingsPage() {
   );
 
   const content = h('div', { class: 'stack-lg' },
-    header, themeCard, langCard, notifCard, privacyCard, signOutCard
+    header, themeCard, langCard, notifCard, voiceCard, privacyCard, signOutCard
   );
   return dashboardLayout(content);
 }
@@ -95,6 +136,13 @@ function fontButton(value, label, current) {
   return h('button', {
     class: `btn ${current === value ? 'btn-primary' : 'btn-outline'}`,
     onclick: () => { updateSettings({ fontSize: value }); toast.success('Saved', `Font size set to ${label}.`); navigate('/settings'); },
+  }, label);
+}
+
+function speedButton(value, label, current) {
+  return h('button', {
+    class: `btn ${current === value ? 'btn-primary' : 'btn-outline'}`,
+    onclick: () => { updateSettings({ speechSpeed: value }); toast.success('Saved', `Speech speed set to ${label}.`); navigate('/settings'); },
   }, label);
 }
 
